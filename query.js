@@ -8,14 +8,39 @@ const https = require('https');
 const cors = require('cors');
 const fs = require('fs');
 
+const serp = require('./utils/serpWow');
+
 const app = express();
 app.use(express.static('public'));
 app.use(express.json({limit: '200mb'})); 
 app.use(cors());
 
+const googleNewsQuery = async (query, timePeriod, res) => {
+    console.log('googleNewsQuery', query);
+}
+
+const processQuery = async (req, res) => {
+    console.log(req.body);
+    const {type, query, timePeriod, token } = req.body;
+
+    let result;
+    switch (type) {
+        case 'google_search_news':
+            result = await serp.google('news', query, timePeriod, 50);
+            if (result === false) return res.status(500).json('internal server error');
+            return res.status(200).json(result);
+            break;
+        default:
+            res.status(400).json('bad command');
+    }
+}
+
+
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
+
+app.post('/query', (req, res) => processQuery(req, res));
 
 const httpsServer = https.createServer({
     key: fs.readFileSync(privateKeyPath),
