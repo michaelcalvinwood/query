@@ -9,11 +9,13 @@ const https = require('https');
 const cors = require('cors');
 const fs = require('fs');
 
+
 const fetchMetaData = require('meta-fetcher');
 console.log(fetchMetaData);
 
 const serp = require('./utils/serpWow');
 const s3 = require('./utils/s3');
+const ai = require('./utils/ai');
 
 const {S3_ENDPOINT, S3_ENDPOINT_DOMAIN, S3_REGION, S3_KEY, S3_SECRET, S3_BUCKET} = process.env;
 const s3Client = s3.client(S3_ENDPOINT, S3_ENDPOINT_DOMAIN, S3_REGION, S3_KEY, S3_SECRET, S3_BUCKET);
@@ -35,6 +37,11 @@ const processQuery = async (req, res) => {
     switch (type) {
         case 'google_search_news':
             result = await serp.google('news', query, timePeriod, 50);
+            if (result === false) return res.status(500).json('internal server error');
+            return res.status(200).json(result);
+            break;
+        case 'google_search_web':
+            result = await serp.google('web', query, timePeriod, 50);
             if (result === false) return res.status(500).json('internal server error');
             return res.status(200).json(result);
             break;
@@ -79,6 +86,18 @@ const getPresignedUrl = async (req, res) => {
     res.status(200).json(url);
 }
 
+const handleChatGPT = async (req, res) => {
+    const { prompt } = req.body;
+
+    if (!prompt) return res.status(400).json('bad command');
+
+    const response = await ai.chatGPT(prompt + "\n");
+
+    if (!response) return res.status(500).json('internal server error');
+
+    res.status(200).json(response);
+}
+
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
@@ -86,6 +105,7 @@ app.get('/', (req, res) => {
 app.post('/query', (req, res) => processQuery(req, res));
 app.post('/meta', (req, res) => getMeta(req, res));
 app.post('/presignedUrl', (req, res) => getPresignedUrl(req, res));
+app.post('/chatGPT', (req, res) => handleChatGPT(req, res));
 
 const httpsServer = https.createServer({
     key: fs.readFileSync(privateKeyPath),

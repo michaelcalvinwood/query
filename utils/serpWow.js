@@ -9,7 +9,6 @@ exports.google = async (type, query, timePeriod, num = 30) => {
     const params = {
         api_key: SERPWOW_KEY,
         engine: "google",
-        search_type: type,
         q: query,
         gl: "us",
         time_period: timePeriod,
@@ -17,6 +16,9 @@ exports.google = async (type, query, timePeriod, num = 30) => {
         num
     }
     
+    console.log('params', params);
+    if (type !== 'web') params.search_type = type;
+
     let response;
     
     try {
@@ -25,9 +27,19 @@ exports.google = async (type, query, timePeriod, num = 30) => {
         console.log('serpWow urls error: ', err);
         return false;
     }
-    //console.log(JSON.stringify(response.data, 0, 2));
+    console.log(JSON.stringify(response.data, 0, 2));
 
-    const organic = response.data.news_results;
+    let organic;
+
+    switch (type) {
+        case 'news':
+            organic = response.data.news_results;
+            break;
+        case 'web':
+            organic = response.data.organic_results;
+            break;
+    }
+     
 
     //console.log('organic', organic);
 
