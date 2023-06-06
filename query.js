@@ -8,6 +8,10 @@ const https = require('https');
 const cors = require('cors');
 const fs = require('fs');
 
+
+const fetchMetaData = require('meta-fetcher');
+console.log(fetchMetaData);
+
 const serp = require('./utils/serpWow');
 
 const app = express();
@@ -40,12 +44,32 @@ const processQuery = async (req, res) => {
     }
 }
 
+const getMeta = async (req, res) => {
+   let response;
+    console.log(req.body.url);
+    console.log(fetchMetaData);
+
+   try {
+    response = await fetchMetaData(req.body.url);
+   } catch (err) {
+    console.error(err);
+    return res.status(500).json('internal server error');
+   }
+
+   if (!response.metadata) return res.status(501).json('internal server error');
+
+   if (!response.metadata.title) return res.status(502).json('internal server error');
+   
+   res.status(200).json(response.metadata.title);
+}
+
 
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
 
 app.post('/query', (req, res) => processQuery(req, res));
+app.post('/meta', (req, res) => getMeta(req, res));
 
 const httpsServer = https.createServer({
     key: fs.readFileSync(privateKeyPath),
