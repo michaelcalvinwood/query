@@ -113,6 +113,18 @@ const handleChatGPT = async (req, res) => {
     res.status(200).json(response);
 }
 
+const handleAIContinue = async (req, res) => {
+    const { prompt } = req.body;
+
+    if (!prompt) return res.status(400).json('bad command');
+
+    const response = await ai.chatGPT(prompt);
+
+    if (!response) return res.status(500).json('internal server error');
+
+    res.status(200).json(response);
+}
+
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
@@ -121,6 +133,7 @@ app.post('/query', (req, res) => processQuery(req, res));
 app.post('/meta', (req, res) => getMeta(req, res));
 app.post('/presignedUrl', (req, res) => getPresignedUrl(req, res));
 app.post('/chatGPT', (req, res) => handleChatGPT(req, res));
+app.post('/AIContinue', (req, res) => handleAIContinue(req, res));
 
 const httpsServer = https.createServer({
     key: fs.readFileSync(privateKeyPath),
