@@ -45,6 +45,11 @@ const processQuery = async (req, res) => {
             if (result === false) return res.status(500).json('internal server error');
             return res.status(200).json(result);
             break;
+        case 'google_search_video':
+            result = await serp.google('videos', query, timePeriod, 50);
+            if (result === false) return res.status(500).json('internal server error');
+            return res.status(200).json(result);
+            break;
         case "pymnts_search_news":
             result = await serp.google('news', query + ' site:pymnts.com', timePeriod, 50);
             if (result === false) return res.status(500).json('internal server error');

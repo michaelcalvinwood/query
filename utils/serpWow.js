@@ -38,6 +38,9 @@ exports.google = async (type, query, timePeriod, num = 30) => {
         case 'web':
             organic = response.data.organic_results;
             break;
+        case 'videos':
+            organic = response.data.video_results;
+            break;
     }
      
 
