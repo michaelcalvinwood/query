@@ -3,16 +3,20 @@ const hostname = 'query.pymnts.com'
 const privateKeyPath = `/etc/letsencrypt/live/${hostname}/privkey.pem`;
 const fullchainPath = `/etc/letsencrypt/live/${hostname}/fullchain.pem`;
 
+require ('dotenv').config();
 const express = require('express');
 const https = require('https');
 const cors = require('cors');
 const fs = require('fs');
 
-
 const fetchMetaData = require('meta-fetcher');
 console.log(fetchMetaData);
 
 const serp = require('./utils/serpWow');
+const s3 = require('./utils/s3');
+
+const {S3_ENDPOINT, S3_ENDPOINT_DOMAIN, S3_REGION, S3_KEY, S3_SECRET, S3_BUCKET} = process.env;
+const s3Client = s3.client(S3_ENDPOINT, S3_ENDPOINT_DOMAIN, S3_REGION, S3_KEY, S3_SECRET, S3_BUCKET);
 
 const app = express();
 app.use(express.static('public'));
@@ -63,6 +67,17 @@ const getMeta = async (req, res) => {
    res.status(200).json(response.metadata.title);
 }
 
+const getPresignedUrl = async (req, res) => {
+    const { key } = req.body;
+
+    if (!key) return res.status(400).json('bad command');
+
+    const url = await s3.presignedUploadUrl(s3Client, key);
+
+    console.log('url', url);
+
+    res.status(200).json(url);
+}
 
 app.get('/', (req, res) => {
     res.send('Hello, World!');
@@ -70,6 +85,7 @@ app.get('/', (req, res) => {
 
 app.post('/query', (req, res) => processQuery(req, res));
 app.post('/meta', (req, res) => getMeta(req, res));
+app.post('/presignedUrl', (req, res) => getPresignedUrl(req, res));
 
 const httpsServer = https.createServer({
     key: fs.readFileSync(privateKeyPath),
@@ -80,5 +96,4 @@ const httpsServer = https.createServer({
   httpsServer.listen(listenPort, '0.0.0.0', () => {
     console.log(`HTTPS Server running on port ${listenPort}`);
 });
-
 
