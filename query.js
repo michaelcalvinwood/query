@@ -8,7 +8,7 @@ const express = require('express');
 const https = require('https');
 const cors = require('cors');
 const fs = require('fs');
-
+const jwt = require('jsonwebtoken');
 
 const fetchMetaData = require('meta-fetcher');
 console.log(fetchMetaData);
@@ -32,6 +32,12 @@ const googleNewsQuery = async (query, timePeriod, res) => {
 const processQuery = async (req, res) => {
     console.log(req.body);
     const {type, query, timePeriod, token } = req.body;
+
+    if (!token) return res.status(400).json('bad request');
+
+    if (!jwt.verify(token, process.env.JWT_SECRET)) return res.status(401).json('invalid');
+
+
 
     let result;
     switch (type) {
