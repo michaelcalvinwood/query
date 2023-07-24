@@ -9,6 +9,7 @@ const https = require('https');
 const cors = require('cors');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 
 const fetchMetaData = require('meta-fetcher');
 console.log(fetchMetaData);
@@ -131,6 +132,23 @@ const handleAIContinue = async (req, res) => {
     res.status(200).json(response);
 }
 
+const handleText = async (req, res) => {
+    console.log('handleText');
+    const { text } = req.body;
+    if (!text) return res.status('400').json(false);
+
+    let result;
+
+    try {
+        result = await s3.uploadTxtAsHTML(text, 'query-text', `text-${uuidv4()}.html`, s3Client);
+        return res.status(200).json(result);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json('internal server error');
+    }
+
+}
+
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
@@ -140,6 +158,7 @@ app.post('/meta', (req, res) => getMeta(req, res));
 app.post('/presignedUrl', (req, res) => getPresignedUrl(req, res));
 app.post('/chatGPT', (req, res) => handleChatGPT(req, res));
 app.post('/AIContinue', (req, res) => handleAIContinue(req, res));
+app.post('/text', (req, res) => handleText(req, res))
 
 const httpsServer = https.createServer({
     key: fs.readFileSync(privateKeyPath),

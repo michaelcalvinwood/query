@@ -215,3 +215,30 @@ exports.download = async (url, filePath) => {
       writer.on('error', reject)
   })
 }
+
+exports.uploadTxtAsHTML = async (data, bucketFolder, bucketFileName, s3Client) => {
+  let paragraphs = data.split("\n");
+
+  for (i = 0; i < paragraphs.length; ++i) paragraphs[i] = `<p>${paragraphs[i]}</p>`;
+
+  data = paragraphs.join("\n");
+
+    data = `<html><head><body>${data}</body></head></html>`;
+
+    const bucketParams = {
+        Bucket: process.env.S3_BUCKET,
+        Key: `${bucketFolder}/${bucketFileName}`,
+        Body: data,
+        ACL: 'public-read',
+        'ContentType': 'text/html'
+      };
+    
+      try {
+        const data = await s3Client.send(new PutObjectCommand(bucketParams));
+        const link = `https://${process.env.S3_BUCKET}.${process.env.S3_ENDPOINT_DOMAIN}/${bucketParams.Key}`;
+        return link;
+      } catch (err) {
+        console.log("Error", err);
+        return '';
+      }      
+};

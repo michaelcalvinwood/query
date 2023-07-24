@@ -27,7 +27,7 @@ exports.google = async (type, query, timePeriod, num = 30) => {
         console.log('serpWow urls error: ', err);
         return false;
     }
-    console.log(JSON.stringify(response.data, 0, 2));
+    //console.log(JSON.stringify(response.data, 0, 2));
 
     let organic;
 
@@ -44,7 +44,7 @@ exports.google = async (type, query, timePeriod, num = 30) => {
     }
      
 
-    //console.log('organic', organic);
+    console.log('organic', organic);
 
     let result = [];
 
