@@ -149,6 +149,16 @@ const handleText = async (req, res) => {
 
 }
 
+const handleAffiliation = async (req, res) => {
+    const { id, content, name } = req.body;
+
+    if (!id || !content || !name) return res.status(400).json('bad command');
+
+    console.log(req.body);
+
+    return res.status(200).json({org: 'Happy Days Org', role: 'CEO'});
+}
+
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
@@ -158,7 +168,9 @@ app.post('/meta', (req, res) => getMeta(req, res));
 app.post('/presignedUrl', (req, res) => getPresignedUrl(req, res));
 app.post('/chatGPT', (req, res) => handleChatGPT(req, res));
 app.post('/AIContinue', (req, res) => handleAIContinue(req, res));
-app.post('/text', (req, res) => handleText(req, res))
+app.post('/text', (req, res) => handleText(req, res));
+app.post('/affiliation', (req, res) => handleAffiliation(req, res));
+
 
 const httpsServer = https.createServer({
     key: fs.readFileSync(privateKeyPath),
