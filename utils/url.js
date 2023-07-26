@@ -30,7 +30,7 @@ exports.urlType = url => {
 exports.getHTML = async (url, debugMe = false) => {
   console.log('url getHTML', url);
   let request = {
-      url: 'http://api.scraperapi.com?country_code=us&device_type=desktop&ultra_premium=true',
+      url: 'http://api.scraperapi.com?country_code=us&device_type=desktop',
       params: {
         api_key: SCRAPERAPI_KEY,
         url
@@ -186,16 +186,14 @@ exports.getContentType = async (url) => {
   try {
     const response = await axios(request);
     console.log(response.headers['content-type']);
-    return;
+    return response.headers['content-type'];
   } catch(err) {
     console.error(err);
   }
 }
 
 exports.getExtensionFromContentType = contentType => {
+  console.log('getExtensionFromContentType', contentType);
   return mime.extension(contentType);
 }
 
-
-
-test();

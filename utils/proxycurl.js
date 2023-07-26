@@ -31,6 +31,8 @@ exports.getLinkedInPhoto = async url => {
     try {
         response = await axios(request);
         console.log(response.data);
+        console.log('proxyCurl photo', response.data.tmp_profile_pic_url)
+        return response.data.tmp_profile_pic_url;
     } catch(err) {
         console.error(err);
         return ('');

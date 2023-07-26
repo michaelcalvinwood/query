@@ -197,10 +197,28 @@ const handlePhoto = async (req, res) => {
     //console.log(links);
 
     let photo = await proxycurl.getLinkedInPhoto(links[0].link);
+    console.log('photo', photo);
+
+    if (!photo) return res.status(500).json('server error');
 
     console.log('photo', photo);
 
-    return res.status(200).json(photo);
+    const contentType = await urlUtil.getContentType(photo);
+    console.log('contentType', contentType);
+    const fileExtension = urlUtil.getExtensionFromContentType(contentType);
+    console.log('fileExtension', fileExtension);
+
+    const fileName = `profile-${uuidv4()}.${fileExtension}`;
+
+    let response;
+
+    try {
+        response = await s3.download(photo, `/var/www/query.pymnts.com/profile-images/${fileName}`);
+        return res.status(200).json(`https://query.pymnts.com/profile-images/${fileName}`);
+    } catch(err) {
+        return res.status(501).json('server error');
+    }
+
 }
 
 const handleProfile = async (req, res) => {
@@ -218,6 +236,83 @@ const handleProfile = async (req, res) => {
 
 
     return res.status(200).json('ok');
+}
+
+const getBio = (biosArr, index, url, name, org) => {
+    return new Promise(async (resolve, reject) => {
+
+        const html = await urlUtil.getHTML(url);
+
+        if (html === false) {
+            biosArr[index] = '';
+            resolve('ok');
+        }
+
+        let text = urlUtil.getTextFromHTML(html, url);
+
+        if (!text) {
+            biosArr[index] = '';
+            resolve('ok');
+        }
+
+        const prompt = `"""Below is an Article. Using two paragraphs, write a compelling biography about ${name} of ${org}. If there is no information in the article regarding ${name} then respond with "no info."
+        
+        Article:
+        ${text}
+        `
+
+        let bio = await ai.chatGPT(prompt);
+
+        biosArr[index] = bio;
+        resolve('ok');
+
+
+    })
+}
+
+const getCombinedBio = async (bios, name, org) => {
+    let prompt = `"""Below are some Articles that may contain information about ${name} of ${org}. Using two paragraphs, combined the information about ${name} of ${org} into a compelling biography.
+    
+    `;
+
+    for (let i = 0; i < bios.length; ++i) prompt += `Article ${i+1}:\n${bios[i]}\n`;
+
+    prompt += `"""\n`;
+
+    const combinedBio = await ai.chatGPT(prompt);
+
+    return combinedBio;
+}
+
+const handleBio = async (req, res) => {
+    const { name, org } = req.body;
+
+    if (!name || !org) return res.status(400).json('invalid');
+
+    const q = `${name} ${org}`;
+
+    const links = await serp.googleGeneral(q);
+
+    const maxBios = 5;
+    let count = 0;
+    const bios = [];
+    const promises = [];
+
+    for (let i = 0; i < links.length; ++i) {
+        if (links[i].domain === 'www.linkedin.com') continue;
+        promises.push(getBio(bios, count++, links[i].link, name, org));
+        if (count >= maxBios) break;
+    }
+
+    let result = await Promise.all(promises);
+
+    console.log('bios', bios);
+
+    const combinedBio = await getCombinedBio(bios, name, org);
+    
+    console.log('combined bio', combinedBio);
+
+    return res.status(200).json(combinedBio);
 }
 
 const handleAffiliation = async (req, res) => {
@@ -254,6 +349,7 @@ app.post('/text', (req, res) => handleText(req, res));
 app.post('/affiliation', (req, res) => handleAffiliation(req, res));
 app.post('/photo', (req, res) => handlePhoto(req, res))
 app.post('/profile', (req, res) => handleProfile(req, res));
+app.post('/bio', (req, res) => handleBio(req, res));
 
 
 const httpsServer = https.createServer({
