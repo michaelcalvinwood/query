@@ -176,3 +176,20 @@ exports.download = async (url, filePath) => {
       writer.on('error', reject)
   })
 }
+
+exports.getContentType = async (url) => {
+  const request = {
+    url,
+    method: 'get'
+  }
+
+  try {
+    const response = await axios(request);
+    console.log(response.headers['content-type']);
+    return;
+  } catch(err) {
+    console.error(err);
+  }
+}
+
+test();
