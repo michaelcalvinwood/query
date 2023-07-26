@@ -154,9 +154,22 @@ const handleAffiliation = async (req, res) => {
 
     if (!id || !content || !name) return res.status(400).json('bad command');
 
-    console.log(req.body);
+    const prompt = `"""Below is an Article. From the article, determine what organization or entity that ${name} is affiliated with. Also determine the role of ${name}. If you cannot determine the affiliation the response must be the exact phrase "affiliation unknown".
+    
+    The return format must be in stringified JSON in the following format:
+    {
+        org: the name of the affiliated organization or entity goes here,
+        role: the role of ${name} in the affiliated organization or entity goes here
+    }
+    
+    Article:
+    ${content}"""`
 
-    return res.status(200).json({org: 'Happy Days Org', role: 'CEO'});
+    const response = await ai.chatJSON(prompt);
+
+    console.log(response);
+
+    return res.status(200).json(response);
 }
 
 app.get('/', (req, res) => {

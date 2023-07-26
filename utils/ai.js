@@ -113,6 +113,8 @@ const getTurboText = async (prompt, temperature = .4) => {
 }
 
 exports.chatGPT = async (prompt, temperature = .4) => await getTurboText(prompt, temperature);
+exports.chatJSON = async (prompt, temperature = .4) => await getTurboJSON(prompt, temperature);
+
 
 exports.getGist = async (text, numSentences = 3) => {
     const prompt = `"""Give the overall gist of the Text below in ${numSentences > 1 ? `${numSentences} sentences` : `1 sentence`}.
