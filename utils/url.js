@@ -4,7 +4,7 @@ const cheerio = require('cheerio');
 const articleExtractor = require('@extractus/article-extractor');
 const HTMLParser = require('node-html-parser');
 const h2p = require('html2plaintext')
-
+const mime = require('mime-types');
 const fs = require('fs');
 
 const { convert } = require('html-to-text');
@@ -191,5 +191,11 @@ exports.getContentType = async (url) => {
     console.error(err);
   }
 }
+
+exports.getExtensionFromContentType = contentType => {
+  return mime.extension(contentType);
+}
+
+
 
 test();
