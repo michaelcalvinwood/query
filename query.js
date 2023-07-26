@@ -149,6 +149,20 @@ const handleText = async (req, res) => {
 
 }
 
+const handlePhoto = async (req, res) => {
+    const { name, org } = req.body;
+
+    if (!name || !org) return res.status(400).json('invalid');
+
+    const q = `${name} ${org} site:linkedin.com`;
+
+    const links = await serp.googleGeneral(q);
+
+    console.log(links);
+
+    return res.status(200).json('ok');
+}
+
 const handleAffiliation = async (req, res) => {
     const { id, content, name } = req.body;
 
@@ -167,8 +181,6 @@ const handleAffiliation = async (req, res) => {
 
     const response = await ai.chatJSON(prompt);
 
-    console.log(response);
-
     return res.status(200).json(response);
 }
 
@@ -183,6 +195,7 @@ app.post('/chatGPT', (req, res) => handleChatGPT(req, res));
 app.post('/AIContinue', (req, res) => handleAIContinue(req, res));
 app.post('/text', (req, res) => handleText(req, res));
 app.post('/affiliation', (req, res) => handleAffiliation(req, res));
+app.post('/photo', (req, res) => handlePhoto(req, res));
 
 
 const httpsServer = https.createServer({
