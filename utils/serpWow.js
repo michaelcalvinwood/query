@@ -73,26 +73,25 @@ exports.googleGeneral = async (query, num = 30) => {
     
     try {
         response = await axios.get('https://api.serpwow.com/search', { params });
+        let organic;
+        organic = response.data.organic_results;
+    
+        //console.log('organic', organic);
+    
+        let result = [];
+    
+        for (let i = 0; i < organic.length; ++i) {
+            const { title, link, domain, snippet, date, date_utc } = organic[i];
+            //console.log('title, link', title, link,);
+            result.push({id: uuidv4(), title, link, domain, snippet, date, date_utc});
+        }
+    
+        //console.log('result', result);
+    
+        return result;
     } catch (err) {
         console.log('serpWow urls error: ', err);
-        return false;
-    }
-    //console.log(JSON.stringify(response.data, 0, 2));
-
-    let organic;
-    organic = response.data.organic_results;
-
-    //console.log('organic', organic);
-
-    let result = [];
-
-    for (let i = 0; i < organic.length; ++i) {
-        const { title, link, domain, snippet, date, date_utc } = organic[i];
-        //console.log('title, link', title, link,);
-        result.push({id: uuidv4(), title, link, domain, snippet, date, date_utc});
+        return [];
     }
 
-    //console.log('result', result);
-
-    return result;
 }
