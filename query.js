@@ -47,6 +47,8 @@ const testDb = async () => {
     console.log(rows);
 }
 
+const esc = str => sql.escape(str);
+
 //testDb();
 
 const app = express();
@@ -429,7 +431,14 @@ const handleContributorPost = async (req, res) => {
     if (!contribution) contribution = '';
 
     const q = `INSERT INTO contributors (name, photo, affiliation, role, occupation, bio, contribution, posts) VALUES 
-    ('', '', '', '', '', '', '', '')`
+    (${esc(name)}, ${esc(photo)}, ${esc(affiliation)}, ${esc(role)}, ${esc(occupation)}, ${esc(bio)}, ${esc(contribution)}, ${esc(posts)})
+    ON DUPLICATE KEY UPDATE photo=${esc(photo)}, affiliation=${esc(affiliation)}, occupation=${esc(occupation)}, bio=${esc(bio)}, contribution=${esc(contribution)}, posts=${esc(posts)}`;
+
+    console.log(q);
+
+    const [rows,fields] = await promisePool.query(q);
+
+    return res.status(200).json('ok');
 }
 
 app.get('/', (req, res) => {
