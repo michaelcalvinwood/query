@@ -45,6 +45,7 @@ exports.google = async (type, query, timePeriod = 'last_year', num = 30) => {
      
 
     console.log('organic', organic);
+    if (typeof organic === 'undefined') return [];
 
     let result = [];
 

@@ -281,6 +281,8 @@ const getCombinedBio = async (bios, name, org) => {
 
     const combinedBio = await ai.chatGPT(prompt);
 
+    //return combinedBio;
+
     prompt = `"""Below is a Biography about ${name} of ${org}. Reduce the length of this biography by removing all redundant information.
 
 Biography:
