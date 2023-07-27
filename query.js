@@ -281,7 +281,14 @@ const getCombinedBio = async (bios, name, org) => {
 
     const combinedBio = await ai.chatGPT(prompt);
 
-    return combinedBio;
+    prompt = `"""Below is a Biography about ${name} of ${org}. Reduce the length of this biography by removing all redundant information.
+
+Biography:
+${combinedBio}\n`
+
+    const reducedBio = await ai.chatGPT(prompt);
+
+    return reducedBio;
 }
 
 const handleBio = async (req, res) => {
@@ -336,6 +343,55 @@ const handleAffiliation = async (req, res) => {
     return res.status(200).json(response);
 }
 
+const getInsights = (article, insightsArr, index, name, org) => {
+    return new Promise(async (resolve, reject) => {
+        const prompt = 
+`"""Below is an Article. List 5 insights and quotes that ${name} of ${org} provided in the article.
+
+Article:
+${article}"""`
+        insightsArr[index] = await ai.chatGPT(prompt);
+        resolve('ok');
+    })
+}
+
+const getContribution = async (insights, bio, name, org) => {
+    let prompt =
+`"""Below is a Biography on ${name} of ${org}. Also below are Insights that ${name} has provided for articles published at PYMNTS.com. Describe how ${name} uses the skills in the Biography to contribute to PYMNTS.com and its readers. The response must include some examples of insights that ${name} provided along with an explanation of how the skills in the Biography enabled ${name} to provide those insights.
+
+Biography:
+${bio}\n\n`
+
+    for (i = 0; i < insights.length; ++i) prompt += `Insights provided for PYMNTS.com article #${i+1}:\n${insights[i]}\n`;
+    prompt += `\n"""`;
+
+    const contribution = await ai.chatGPT(prompt);
+
+    return contribution;
+
+}
+    
+
+const handleContribution = async (req, res) => {
+    const { posts, bio, name, org } = req.body;
+
+    if (!posts || !posts.length || !bio || !name || !org) return res.status(400).json('bad request');
+
+    const insights = [];
+    for (let i = 0; i < posts.length; ++i) {
+        if (i >= 5) break;
+        insights.push(getInsights(posts[i], insights, i, name, org));
+    }
+
+    await Promise.all(insights);
+
+    console.log(insights);
+
+    const contribution = await getContribution(insights, bio, name, org);
+
+    return res.status(200).json(contribution);
+}
+
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
@@ -350,6 +406,7 @@ app.post('/affiliation', (req, res) => handleAffiliation(req, res));
 app.post('/photo', (req, res) => handlePhoto(req, res))
 app.post('/profile', (req, res) => handleProfile(req, res));
 app.post('/bio', (req, res) => handleBio(req, res));
+app.post('/contribution', (req, res) => handleContribution(req, res));
 
 
 const httpsServer = https.createServer({
