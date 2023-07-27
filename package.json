@@ -25,6 +25,7 @@
     "jsonwebtoken": "^9.0.0",
     "meta-fetcher": "^3.1.1",
     "metascraper": "^5.34.7",
+    "mysql2": "^3.5.2",
     "node-fetch": "^3.3.1",
     "node-html-parser": "^6.1.5",
     "node-metainspector": "^2.0.0",

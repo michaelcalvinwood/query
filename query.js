@@ -12,7 +12,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const cheerio = require('cheerio');
-
+const sql = require('mysql2');
 
 const fetchMetaData = require('meta-fetcher');
 console.log(fetchMetaData);
@@ -23,8 +23,31 @@ const ai = require('./utils/ai');
 const urlUtil = require('./utils/url')
 const proxycurl = require('./utils/proxycurl');
 
-const {S3_ENDPOINT, S3_ENDPOINT_DOMAIN, S3_REGION, S3_KEY, S3_SECRET, S3_BUCKET} = process.env;
+const {S3_ENDPOINT, S3_ENDPOINT_DOMAIN, S3_REGION, S3_KEY, S3_SECRET, S3_BUCKET, MYSQL_HOST, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD} = process.env;
 const s3Client = s3.client(S3_ENDPOINT, S3_ENDPOINT_DOMAIN, S3_REGION, S3_KEY, S3_SECRET, S3_BUCKET);
+
+const pool = sql.createPool({
+    host: MYSQL_HOST,
+    user: MYSQL_USER,
+    database: MYSQL_DATABASE,
+    password: MYSQL_PASSWORD,
+    waitForConnections: true,
+    connectionLimit: 10,
+    maxIdle: 10, // max idle connections, the default value is the same as `connectionLimit`
+    idleTimeout: 60000, // idle connections timeout, in milliseconds, the default value 60000
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0
+});
+
+const promisePool = pool.promise();
+
+const testDb = async () => {
+    const [rows,fields] = await promisePool.query("SHOW DATABASES");
+    console.log(rows);
+}
+
+//testDb();
 
 const app = express();
 app.use(express.static('public'));
@@ -394,6 +417,21 @@ const handleContribution = async (req, res) => {
     return res.status(200).json(contribution);
 }
 
+const handleContributorPost = async (req, res) => {
+    const { name, photo, affiliation, role, occupation, bio, contribution, posts } = req.body;
+
+    if (!name || !posts || !bio) return res.status(400).json('bad request');
+
+    if (!photo) photo = '';
+    if (!affiliation) affiliation = '';
+    if (!role) role = '';
+    if (!occupation) occupation = '';
+    if (!contribution) contribution = '';
+
+    const q = `INSERT INTO contributors (name, photo, affiliation, role, occupation, bio, contribution, posts) VALUES 
+    ('', '', '', '', '', '', '', '')`
+}
+
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
@@ -409,6 +447,7 @@ app.post('/photo', (req, res) => handlePhoto(req, res))
 app.post('/profile', (req, res) => handleProfile(req, res));
 app.post('/bio', (req, res) => handleBio(req, res));
 app.post('/contribution', (req, res) => handleContribution(req, res));
+app.post('/contributor', (req, res) => handleContributorPost(req, res));
 
 
 const httpsServer = https.createServer({
