@@ -420,7 +420,7 @@ const handleContribution = async (req, res) => {
 }
 
 const handleContributorPost = async (req, res) => {
-    const { name, photo, affiliation, role, occupation, bio, contribution, posts } = req.body;
+    const { name, photo, affiliation, role, occupation, bio, contribution, posts, firstPostId } = req.body;
 
     if (!name || !posts || !bio) return res.status(400).json('bad request');
 
@@ -429,11 +429,32 @@ const handleContributorPost = async (req, res) => {
     if (!role) role = '';
     if (!occupation) occupation = '';
     if (!contribution) contribution = '';
+    if (!firstPostId) firstPostId = 0;
 
-    const q = `INSERT INTO contributors (name, photo, affiliation, role, occupation, bio, contribution, posts) VALUES 
-    (${esc(name)}, ${esc(photo)}, ${esc(affiliation)}, ${esc(role)}, ${esc(occupation)}, ${esc(bio)}, ${esc(contribution)}, ${esc(posts)})
-    ON DUPLICATE KEY UPDATE photo=${esc(photo)}, affiliation=${esc(affiliation)}, occupation=${esc(occupation)}, bio=${esc(bio)}, contribution=${esc(contribution)}, posts=${esc(posts)}`;
+    const q = `INSERT INTO contributors (name, photo, affiliation, role, occupation, bio, contribution, posts, first_post) VALUES 
+    (${esc(name)}, ${esc(photo)}, ${esc(affiliation)}, ${esc(role)}, ${esc(occupation)}, ${esc(bio)}, ${esc(contribution)}, ${esc(posts)}, ${firstPostId})
+    ON DUPLICATE KEY UPDATE photo=${esc(photo)}, affiliation=${esc(affiliation)}, occupation=${esc(occupation)}, bio=${esc(bio)}, contribution=${esc(contribution)}, posts=${esc(posts)}, first_post=${firstPostId}`;
 
+    console.log(q);
+
+    const [rows,fields] = await promisePool.query(q);
+
+    return res.status(200).json('ok');
+}
+
+const handleUpdateContributorPost = async (req, res) => {
+    const { name, photo, affiliation, role, occupation, bio, contribution} = req.body;
+
+    if (!name || !bio) return res.status(400).json('bad request');
+
+    if (!photo) photo = '';
+    if (!affiliation) affiliation = '';
+    if (!role) role = '';
+    if (!occupation) occupation = '';
+    if (!contribution) contribution = '';
+   
+    const q = `UPDATE contributors SET photo=${esc(photo)}, affiliation=${esc(affiliation)}, role=${esc(role)}, occupation=${esc(occupation)}, bio=${esc(bio)}, contribution=${esc(contribution)} WHERE name=${esc(name)}`;
+    
     console.log(q);
 
     const [rows,fields] = await promisePool.query(q);
@@ -457,6 +478,7 @@ app.post('/profile', (req, res) => handleProfile(req, res));
 app.post('/bio', (req, res) => handleBio(req, res));
 app.post('/contribution', (req, res) => handleContribution(req, res));
 app.post('/contributor', (req, res) => handleContributorPost(req, res));
+app.post('/updateContributorPost', (req, res) => handleUpdateContributorPost(req, res));
 
 
 const httpsServer = https.createServer({
