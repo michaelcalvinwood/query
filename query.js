@@ -462,6 +462,18 @@ const handleUpdateContributorPost = async (req, res) => {
     return res.status(200).json('ok');
 }
 
+const handleContributorRedo = async (req, res) => {
+    const { name } = req.body;
+
+    if (!name) return res.status(400).json('bad request');
+
+    const q = `DELETE FROM contributors WHERE name = ${esc(name)}`;
+
+    const [rows,fields] = await promisePool.query(q);
+
+    return res.status(200).json('ok');
+}
+
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
@@ -479,6 +491,7 @@ app.post('/bio', (req, res) => handleBio(req, res));
 app.post('/contribution', (req, res) => handleContribution(req, res));
 app.post('/contributor', (req, res) => handleContributorPost(req, res));
 app.post('/updateContributorPost', (req, res) => handleUpdateContributorPost(req, res));
+app.post('/contributorRedo', (req, res) => handleContributorRedo(req, res));
 
 
 const httpsServer = https.createServer({
